@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+networkx
+gymnasium
+stable-baselines3
+shimmy>=2.0.0
+numpy
+pydantic
