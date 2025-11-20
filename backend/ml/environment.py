@@ -19,9 +19,7 @@ class DataCenterEnv(gym.Env):
         self.servers = self.topology.servers
         self.num_servers = len(self.servers)
         
-        # Action Space to Move a specific container to a specific server
-        #  flatten this: Action = container_idx * num_servers + server_idx
-        # then again u cna use MultiDiscrete: [container_idx, server_idx]
+        
         self.action_space = spaces.MultiDiscrete([num_containers, self.num_servers])
         
         self.observation_space = spaces.Box(
