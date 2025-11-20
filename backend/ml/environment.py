@@ -32,6 +32,7 @@ class DataCenterEnv(gym.Env):
         )
         
         self.current_traffic = None
+        self.reset()
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)

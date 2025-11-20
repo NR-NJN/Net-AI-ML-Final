@@ -11,7 +11,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [optimizationStep, setOptimizationStep] = useState(0);
 
-  // Initial Load
+
   useEffect(() => {
     fetchState();
   }, []);
@@ -30,7 +30,7 @@ function App() {
     try {
       const response = await resetSimulation();
       setNetworkData(response.state);
-      setMetricsHistory([]); // Clear history
+      setMetricsHistory([]);
       setOptimizationStep(0);
     } catch (error) {
       console.error("Failed to reset:", error);
@@ -41,10 +41,10 @@ function App() {
   const handleOptimize = async () => {
     setLoading(true);
     try {
-      const result = await optimizeNetwork(5); // Run 5 steps at a time
+      const result = await optimizeNetwork(5);
       setNetworkData(result.final_state);
 
-      // Update Metrics
+
       setMetricsHistory(prev => [
         ...prev,
         { step: optimizationStep, cost: result.initial_cost },

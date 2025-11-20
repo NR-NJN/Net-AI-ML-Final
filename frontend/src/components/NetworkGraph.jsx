@@ -8,24 +8,24 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         if (!data || !data.nodes || !data.links) return;
 
         const svg = d3.select(svgRef.current);
-        svg.selectAll("*").remove(); // Clear previous render
+        svg.selectAll("*").remove();
 
         const { nodes, links, containers } = data;
 
-        // Create a simulation
+
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(50))
             .force("charge", d3.forceManyBody().strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("y", d3.forceY().y(d => {
-                // Force layers: Core (0) -> Agg (1) -> Server (2)
+
                 if (d.type === 'core') return height * 0.1;
                 if (d.type === 'aggregation') return height * 0.3;
                 if (d.type === 'server') return height * 0.6;
                 return height / 2;
             }).strength(1));
 
-        // Draw Links
+
         const link = svg.append("g")
             .selectAll("line")
             .data(links)
@@ -34,14 +34,13 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .attr("stroke-opacity", 0.6)
             .attr("stroke-width", d => Math.sqrt(d.weight || 1));
 
-        // Draw Nodes
+
         const node = svg.append("g")
             .selectAll("g")
             .data(nodes)
             .join("g")
             .call(drag(simulation));
 
-        // Node Shapes
         node.each(function (d) {
             const el = d3.select(this);
             if (d.type === 'core') {
@@ -53,7 +52,7 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             }
         });
 
-        // Add Labels
+
         node.append("text")
             .text(d => d.id)
             .attr("x", 12)
@@ -61,12 +60,8 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .style("font-size", "10px")
             .style("pointer-events", "none");
 
-        // Draw Containers (as small dots around servers)
-        // This is a simplified view; ideally we'd simulate them inside the server node
-        // For now, let's just list them or show a count
         node.each(function (d) {
             if (d.type === 'server') {
-                // Find containers on this server
                 const myContainers = Object.entries(containers)
                     .filter(([cid, sid]) => sid === d.id)
                     .map(([cid]) => cid);
@@ -93,7 +88,6 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
 
     }, [data, width, height]);
 
-    // Drag interaction
     const drag = (simulation) => {
         function dragstarted(event) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
