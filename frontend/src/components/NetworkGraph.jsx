@@ -53,15 +53,15 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
 
 
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(55))
-            .force("charge", d3.forceManyBody().strength(-400))
+            .force("link", d3.forceLink(links).id(d => d.id).distance(80))
+            .force("charge", d3.forceManyBody().strength(-800))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("y", d3.forceY().y(d => {
                 if (d.type === 'core') return height * 0.15;
                 if (d.type === 'aggregation') return height * 0.4;
                 if (d.type === 'server') return height * 0.75;
                 return height / 2;
-            }).strength(2));
+            }).strength(1.5));
 
 
         const link = svg.append("g")
@@ -90,16 +90,59 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
 
         node.each(function (d) {
             const el = d3.select(this);
+            let tooltipText = `${d.id} (${d.type})`;
+
             if (d.type === 'core') {
                 el.append("circle").attr("r", 18).attr("fill", "#ef4444").attr("stroke", "#fff").attr("stroke-width", 2);
             } else if (d.type === 'aggregation') {
                 el.append("rect").attr("width", 24).attr("height", 24).attr("x", -12).attr("y", -12).attr("fill", "#3b82f6").attr("rx", 4).attr("stroke", "#fff").attr("stroke-width", 2);
             } else {
+
                 el.append("rect").attr("width", 36).attr("height", 20).attr("x", -18).attr("y", -10).attr("fill", "#22c55e").attr("rx", 4).attr("stroke", "#fff").attr("stroke-width", 2);
+
+
+                const myContainers = Object.entries(containers)
+                    .filter(([cid, sid]) => sid === d.id)
+                    .map(([cid]) => cid);
+
+                if (myContainers.length > 0) {
+                    tooltipText += `\nContainers: ${myContainers.join(', ')}`;
+                }
+
+
+
+                if (myContainers.includes("Container_0") || myContainers.includes("Container_1")) {
+                    el.append("circle")
+                        .attr("r", 6)
+                        .attr("cx", -18)
+                        .attr("cy", -10)
+                        .attr("fill", "#06b6d4")
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                }
+
+                if (myContainers.includes("Container_2") || myContainers.includes("Container_3")) {
+                    el.append("circle")
+                        .attr("r", 6)
+                        .attr("cx", 18)
+                        .attr("cy", -10)
+                        .attr("fill", "#d946ef")
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                }
+
+
+                const badge = el.append("g").attr("transform", "translate(0, 18)");
+                badge.append("text")
+                    .text(`${myContainers.length} Cs`)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "10px")
+                    .style("fill", "#475569")
+                    .style("font-weight", "500");
             }
 
 
-            el.append("title").text(`${d.id} (${d.type})`);
+            el.append("title").text(tooltipText);
         });
 
 
@@ -113,24 +156,6 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
                     .style("font-weight", "bold")
                     .style("fill", "#334155")
                     .style("pointer-events", "none");
-            }
-        });
-
-
-        node.each(function (d) {
-            if (d.type === 'server') {
-                const myContainers = Object.entries(containers)
-                    .filter(([cid, sid]) => sid === d.id)
-                    .map(([cid]) => cid);
-
-                const badge = d3.select(this).append("g").attr("transform", "translate(0, 18)");
-
-                badge.append("text")
-                    .text(`${myContainers.length} Cs`)
-                    .attr("text-anchor", "middle")
-                    .style("font-size", "10px")
-                    .style("fill", "#475569")
-                    .style("font-weight", "500");
             }
         });
 
@@ -151,7 +176,9 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         const legendItems = [
             { color: "#ef4444", label: "Heavy Traffic (> 1000)" },
             { color: "#f59e0b", label: "Medium Traffic" },
-            { color: "#cbd5e1", label: "Low/Idle" }
+            { color: "#cbd5e1", label: "Low/Idle" },
+            { color: "#06b6d4", label: "Burst Pair 1 (C0/C1)" },
+            { color: "#d946ef", label: "Burst Pair 2 (C2/C3)" }
         ];
 
         legendItems.forEach((item, i) => {

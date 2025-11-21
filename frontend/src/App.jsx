@@ -82,7 +82,7 @@ function App() {
       <main className="main-content">
         <div className="viz-container">
           {networkData ? (
-            <NetworkGraph data={networkData} width={900} height={600} />
+            <NetworkGraph data={networkData} width={1200} height={800} />
           ) : (
             <div className="loading">Loading Network Topology...</div>
           )}

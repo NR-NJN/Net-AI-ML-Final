@@ -74,15 +74,36 @@ class TrafficGenerator:
         self.traffic_matrix[dst_id][src_id] = volume
 
     def generate_temporal_traffic(self, step: int):
-        self.generate_random_traffic(density=0.1, max_throughput=50.0)
-        
-         
+        self.traffic_matrix = self._get_traffic_for_step(step)
+
+    def peek_traffic(self, step: int) -> Dict[str, Dict[str, float]]:
+        return self._get_traffic_for_step(step)
+
+    def _get_traffic_for_step(self, step: int) -> Dict[str, Dict[str, float]]:
+        traffic = {}
+        for i in range(self.num_containers):
+            src_id = f"Container_{i}"
+            traffic[src_id] = {}
+            for j in range(self.num_containers):
+                if i == j: continue
+                if random.random() < 0.1:
+                    dst_id = f"Container_{j}"
+                    traffic[src_id][dst_id] = random.uniform(1.0, 50.0)
+
         if 20 <= step < 30:
-            self.generate_burst_traffic("Container_0", "Container_1", volume=5000.0)
+            self._add_burst(traffic, "Container_0", "Container_1", 5000.0)
             
          
         if 60 <= step < 70:
-            self.generate_burst_traffic("Container_2", "Container_3", volume=5000.0)
+            self._add_burst(traffic, "Container_2", "Container_3", 5000.0)
+            
+        return traffic
+
+    def _add_burst(self, traffic, src, dst, vol):
+        if src not in traffic: traffic[src] = {}
+        traffic[src][dst] = vol
+        if dst not in traffic: traffic[dst] = {}
+        traffic[dst][src] = vol
 
     def get_traffic(self):
         return self.traffic_matrix
