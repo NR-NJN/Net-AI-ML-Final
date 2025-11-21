@@ -13,26 +13,75 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         const { nodes, links, containers } = data;
 
 
+        const prevContainers = svgRef.current._prevContainers || {};
+        const moves = [];
+
+        Object.entries(containers).forEach(([cid, sid]) => {
+            const prevSid = prevContainers[cid];
+            if (prevSid && prevSid !== sid) {
+                moves.push({ cid, from: prevSid, to: sid });
+            }
+        });
+
+
+        svgRef.current._prevContainers = containers;
+
+
+
+
+        if (moves.length > 0) {
+            const particleGroup = svg.append("g").attr("class", "particles");
+
+            moves.forEach(move => {
+                const sourceNode = nodes.find(n => n.id === move.from);
+                const targetNode = nodes.find(n => n.id === move.to);
+
+                if (sourceNode && targetNode) {
+                    const particle = particleGroup.append("circle")
+                        .attr("r", 4)
+                        .attr("fill", "#facc15")
+                        .attr("stroke", "#000")
+                        .attr("cx", sourceNode.x)
+                        .attr("cy", sourceNode.y);
+
+                    particle.transition()
+                        .duration(1000)
+                        .attr("cx", targetNode.x)
+                        .attr("cy", targetNode.y)
+                        .remove();
+                }
+            });
+        }
+
+
+
         const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(50))
-            .force("charge", d3.forceManyBody().strength(-300))
+            .force("link", d3.forceLink(links).id(d => d.id).distance(55))
+            .force("charge", d3.forceManyBody().strength(-400))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("y", d3.forceY().y(d => {
-
-                if (d.type === 'core') return height * 0.1;
-                if (d.type === 'aggregation') return height * 0.3;
-                if (d.type === 'server') return height * 0.6;
+                if (d.type === 'core') return height * 0.15;
+                if (d.type === 'aggregation') return height * 0.4;
+                if (d.type === 'server') return height * 0.75;
                 return height / 2;
-            }).strength(1));
+            }).strength(2));
 
 
         const link = svg.append("g")
             .selectAll("line")
             .data(links)
             .join("line")
-            .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
-            .attr("stroke-width", d => Math.sqrt(d.weight || 1));
+            .attr("stroke", d => {
+
+                if (d.load > 5000) return "#ef4444";
+                if (d.load > 1000) return "#f59e0b";
+                return "#cbd5e1";
+            })
+            .attr("stroke-opacity", d => d.load > 1000 ? 1 : 0.6)
+            .attr("stroke-width", d => {
+
+                return Math.min(Math.sqrt(d.load / 100) + 1, 5);
+            });
 
 
         const node = svg.append("g")
@@ -41,24 +90,35 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .join("g")
             .call(drag(simulation));
 
+
         node.each(function (d) {
             const el = d3.select(this);
             if (d.type === 'core') {
-                el.append("circle").attr("r", 15).attr("fill", "#ff4444");
+                el.append("circle").attr("r", 18).attr("fill", "#ef4444").attr("stroke", "#fff").attr("stroke-width", 2);
             } else if (d.type === 'aggregation') {
-                el.append("rect").attr("width", 20).attr("height", 20).attr("x", -10).attr("y", -10).attr("fill", "#4444ff");
+                el.append("rect").attr("width", 24).attr("height", 24).attr("x", -12).attr("y", -12).attr("fill", "#3b82f6").attr("rx", 4).attr("stroke", "#fff").attr("stroke-width", 2);
             } else {
-                el.append("rect").attr("width", 30).attr("height", 15).attr("x", -15).attr("y", -7.5).attr("fill", "#44ff44");
+                el.append("rect").attr("width", 36).attr("height", 20).attr("x", -18).attr("y", -10).attr("fill", "#22c55e").attr("rx", 4).attr("stroke", "#fff").attr("stroke-width", 2);
             }
+
+
+            el.append("title").text(`${d.id} (${d.type})`);
         });
 
 
-        node.append("text")
-            .text(d => d.id)
-            .attr("x", 12)
-            .attr("y", 3)
-            .style("font-size", "10px")
-            .style("pointer-events", "none");
+        node.each(function (d) {
+            if (d.type !== 'server') {
+                d3.select(this).append("text")
+                    .text(d.id)
+                    .attr("x", 15)
+                    .attr("y", 5)
+                    .style("font-size", "12px")
+                    .style("font-weight", "bold")
+                    .style("fill", "#334155")
+                    .style("pointer-events", "none");
+            }
+        });
+
 
         node.each(function (d) {
             if (d.type === 'server') {
@@ -66,13 +126,15 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
                     .filter(([cid, sid]) => sid === d.id)
                     .map(([cid]) => cid);
 
-                if (myContainers.length > 0) {
-                    d3.select(this).append("text")
-                        .text(`(${myContainers.length})`)
-                        .attr("y", 20)
-                        .attr("text-anchor", "middle")
-                        .style("font-size", "8px");
-                }
+
+                const badge = d3.select(this).append("g").attr("transform", "translate(0, 18)");
+
+                badge.append("text")
+                    .text(`${myContainers.length} Cs`)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "10px")
+                    .style("fill", "#475569")
+                    .style("font-weight", "500");
             }
         });
 
@@ -87,6 +149,7 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         });
 
     }, [data, width, height]);
+
 
     const drag = (simulation) => {
         function dragstarted(event) {

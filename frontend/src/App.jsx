@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import NetworkGraph from './components/NetworkGraph';
 import MetricsPanel from './components/MetricsPanel';
-import { getNetworkState, resetSimulation, optimizeNetwork } from './api';
-import { Play, RotateCcw, Activity } from 'lucide-react';
+import { getNetworkState, resetSimulation, optimizeNetwork, triggerBurst } from './api';
+import { Play, RotateCcw, Activity, Zap } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -10,6 +10,7 @@ function App() {
   const [metricsHistory, setMetricsHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [optimizationStep, setOptimizationStep] = useState(0);
+
 
 
   useEffect(() => {
@@ -34,6 +35,20 @@ function App() {
       setOptimizationStep(0);
     } catch (error) {
       console.error("Failed to reset:", error);
+    }
+    setLoading(false);
+  };
+
+  const handleBurst = async () => {
+    setLoading(true);
+    try {
+      const response = await triggerBurst();
+      setNetworkData(response.state);
+
+
+      alert(`Traffic Burst Triggered! New Cost: ${Math.round(response.new_cost).toLocaleString()}`);
+    } catch (error) {
+      console.error("Failed to trigger burst:", error);
     }
     setLoading(false);
   };
@@ -66,6 +81,9 @@ function App() {
           <button onClick={handleReset} disabled={loading} className="btn btn-secondary">
             <RotateCcw size={16} /> Reset
           </button>
+          <button onClick={handleBurst} disabled={loading} className="btn btn-warning" style={{ backgroundColor: '#f59e0b', color: 'white' }}>
+            <Zap size={16} /> Trigger Burst
+          </button>
           <button onClick={handleOptimize} disabled={loading} className="btn btn-primary">
             <Play size={16} /> Optimize (AI)
           </button>
@@ -75,7 +93,7 @@ function App() {
       <main className="main-content">
         <div className="viz-container">
           {networkData ? (
-            <NetworkGraph data={networkData} width={800} height={500} />
+            <NetworkGraph data={networkData} width={900} height={600} />
           ) : (
             <div className="loading">Loading Network Topology...</div>
           )}

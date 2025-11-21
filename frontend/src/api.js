@@ -18,3 +18,8 @@ export const optimizeNetwork = async (steps = 10) => {
     });
     return response.data;
 };
+
+export const triggerBurst = async () => {
+    const response = await axios.post(`${API_URL}/burst`);
+    return response.data;
+};

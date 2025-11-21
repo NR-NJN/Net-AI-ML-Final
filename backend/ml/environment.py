@@ -44,6 +44,9 @@ class DataCenterEnv(gym.Env):
         
         return self._get_obs(), {}
 
+    def get_current_state(self):
+        return self.topology.get_state_with_traffic(self.current_traffic)
+
     def step(self, action):
         container_idx, server_idx = action
         container_id = f"Container_{container_idx}"
@@ -84,3 +87,13 @@ class DataCenterEnv(gym.Env):
 
     def render(self):
         print(f"Current Network Cost: {self._calculate_network_cost()}")
+
+    def trigger_burst(self):
+        c1 = "Container_0"
+        c2 = "Container_1"
+        
+         
+        self.traffic_gen.generate_burst_traffic(c1, c2, volume=50000.0)
+        self.current_traffic = self.traffic_gen.get_traffic()
+        
+        return self._calculate_network_cost()

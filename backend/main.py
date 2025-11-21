@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from simulation.topology import NetworkTopology
 from simulation.traffic import TrafficGenerator
 from ml.environment import DataCenterEnv
@@ -9,7 +10,6 @@ import uvicorn
 
 app = FastAPI()
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,11 +18,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from fastapi.responses import RedirectResponse
-
-from fastapi.responses import RedirectResponse
-
-
 env = DataCenterEnv()
 agent = RLAgent(env)
 
@@ -30,18 +25,14 @@ agent = RLAgent(env)
 def read_root():
     return RedirectResponse(url="/docs")
 
-@app.get("/")
-def read_root():
-    return RedirectResponse(url="/docs")
-
 @app.get("/api/state", response_model=TopologyState)
 def get_state():
-    return env.topology.get_state()
+    return env.get_current_state()
 
 @app.post("/api/reset")
 def reset_simulation():
     env.reset()
-    return {"message": "Simulation reset", "state": env.topology.get_state()}
+    return {"message": "Simulation reset", "state": env.get_current_state()}
 
 @app.post("/api/optimize")
 def optimize_network(steps: int = 10):
@@ -60,7 +51,16 @@ def optimize_network(steps: int = 10):
         "initial_cost": initial_cost,
         "final_cost": final_cost,
         "steps_taken": steps,
-        "final_state": env.topology.get_state()
+        "final_state": env.get_current_state()
+    }
+
+@app.post("/api/burst")
+def trigger_burst():
+    new_cost = env.trigger_burst()
+    return {
+        "message": "Traffic burst triggered!",
+        "new_cost": new_cost,
+        "state": env.get_current_state()
     }
 
 if __name__ == "__main__":
