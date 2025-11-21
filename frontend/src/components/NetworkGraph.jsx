@@ -27,8 +27,6 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         svgRef.current._prevContainers = containers;
 
 
-
-
         if (moves.length > 0) {
             const particleGroup = svg.append("g").attr("class", "particles");
 
@@ -54,7 +52,6 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         }
 
 
-
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(55))
             .force("charge", d3.forceManyBody().strength(-400))
@@ -73,8 +70,8 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .join("line")
             .attr("stroke", d => {
 
-                if (d.load > 5000) return "#ef4444";
-                if (d.load > 1000) return "#f59e0b";
+                if (d.load > 1000) return "#ef4444";
+                if (d.load > 100) return "#f59e0b";
                 return "#cbd5e1";
             })
             .attr("stroke-opacity", d => d.load > 1000 ? 1 : 0.6)
@@ -126,7 +123,6 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
                     .filter(([cid, sid]) => sid === d.id)
                     .map(([cid]) => cid);
 
-
                 const badge = d3.select(this).append("g").attr("transform", "translate(0, 18)");
 
                 badge.append("text")
@@ -148,6 +144,38 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             node.attr("transform", d => `translate(${d.x},${d.y})`);
         });
 
+
+        const legend = svg.append("g")
+            .attr("transform", "translate(20, 20)");
+
+        const legendItems = [
+            { color: "#ef4444", label: "Heavy Traffic (> 1000)" },
+            { color: "#f59e0b", label: "Medium Traffic" },
+            { color: "#cbd5e1", label: "Low/Idle" }
+        ];
+
+        legendItems.forEach((item, i) => {
+            const g = legend.append("g")
+                .attr("transform", `translate(0, ${i * 20})`);
+
+            g.append("line")
+                .attr("x1", 0).attr("y1", 0)
+                .attr("x2", 20).attr("y2", 0)
+                .attr("stroke", item.color)
+                .attr("stroke-width", 3);
+
+            g.append("text")
+                .attr("x", 30)
+                .attr("y", 4)
+                .text(item.label)
+                .style("font-size", "12px")
+                .style("fill", "#64748b");
+        });
+
+
+        return () => {
+            simulation.stop();
+        };
     }, [data, width, height]);
 
 

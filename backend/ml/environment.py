@@ -12,16 +12,17 @@ class DataCenterEnv(gym.Env):
         self.servers_per_pod = servers_per_pod
         self.num_containers = num_containers
         
-        
+         
         self.topology = NetworkTopology(num_pods, servers_per_pod)
         self.traffic_gen = TrafficGenerator(num_containers)
         
         self.servers = self.topology.servers
         self.num_servers = len(self.servers)
         
-        
+         
         self.action_space = spaces.MultiDiscrete([num_containers, self.num_servers])
         
+         
         self.observation_space = spaces.Box(
             low=0, 
             high=self.num_servers - 1, 
@@ -30,40 +31,47 @@ class DataCenterEnv(gym.Env):
         )
         
         self.current_traffic = None
+        self.current_step = 0
         self.reset()
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         
-        
+        self.current_step = 0
         self.topology.place_containers(self.num_containers)
         
-       
-        self.traffic_gen.generate_clustered_traffic()
+         
+        self.traffic_gen.generate_temporal_traffic(self.current_step)
         self.current_traffic = self.traffic_gen.get_traffic()
         
-        return self._get_obs(), {}
+        return self._get_obs(), {"step": self.current_step}
 
     def get_current_state(self):
-        return self.topology.get_state_with_traffic(self.current_traffic)
+        state = self.topology.get_state_with_traffic(self.current_traffic)
+        state["step"] = self.current_step
+        return state
 
     def step(self, action):
+        self.current_step += 1
+        
+         
         container_idx, server_idx = action
         container_id = f"Container_{container_idx}"
         new_server_id = self.servers[server_idx]
-        
-        
         self.topology.move_container(container_id, new_server_id)
         
+         
+        self.traffic_gen.generate_temporal_traffic(self.current_step)
+        self.current_traffic = self.traffic_gen.get_traffic()
         
+         
         total_cost = self._calculate_network_cost()
         reward = -total_cost
-        
         
         terminated = False
         truncated = False
         
-        return self._get_obs(), reward, terminated, truncated, {"cost": total_cost}
+        return self._get_obs(), reward, terminated, truncated, {"cost": total_cost, "step": self.current_step}
 
     def _get_obs(self):
         obs = np.zeros(self.num_containers, dtype=np.int32)
@@ -93,7 +101,7 @@ class DataCenterEnv(gym.Env):
         c2 = "Container_1"
         
          
-        self.traffic_gen.generate_burst_traffic(c1, c2, volume=50000.0)
+        self.traffic_gen.generate_burst_traffic(c1, c2, volume=5000.0)
         self.current_traffic = self.traffic_gen.get_traffic()
         
         return self._calculate_network_cost()

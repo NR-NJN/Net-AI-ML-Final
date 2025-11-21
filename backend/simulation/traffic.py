@@ -68,10 +68,21 @@ class TrafficGenerator:
         if src_id not in self.traffic_matrix:
             self.traffic_matrix[src_id] = {}
         self.traffic_matrix[src_id][dst_id] = volume
-         
+        
         if dst_id not in self.traffic_matrix:
             self.traffic_matrix[dst_id] = {}
         self.traffic_matrix[dst_id][src_id] = volume
+
+    def generate_temporal_traffic(self, step: int):
+        self.generate_random_traffic(density=0.1, max_throughput=50.0)
+        
+         
+        if 20 <= step < 30:
+            self.generate_burst_traffic("Container_0", "Container_1", volume=5000.0)
+            
+         
+        if 60 <= step < 70:
+            self.generate_burst_traffic("Container_2", "Container_3", volume=5000.0)
 
     def get_traffic(self):
         return self.traffic_matrix

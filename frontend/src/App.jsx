@@ -39,26 +39,11 @@ function App() {
     setLoading(false);
   };
 
-  const handleBurst = async () => {
-    setLoading(true);
-    try {
-      const response = await triggerBurst();
-      setNetworkData(response.state);
-
-
-      alert(`Traffic Burst Triggered! New Cost: ${Math.round(response.new_cost).toLocaleString()}`);
-    } catch (error) {
-      console.error("Failed to trigger burst:", error);
-    }
-    setLoading(false);
-  };
-
   const handleOptimize = async () => {
     setLoading(true);
     try {
       const result = await optimizeNetwork(5);
       setNetworkData(result.final_state);
-
 
       setMetricsHistory(prev => [
         ...prev,
@@ -76,13 +61,17 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <h1><Activity className="inline-icon" /> Data Center Optimizer</h1>
+        <div className="flex items-center gap-4">
+          <h1><Activity className="inline-icon" /> Data Center Optimizer</h1>
+          {networkData && (
+            <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-mono">
+              Step: {networkData.step}
+            </span>
+          )}
+        </div>
         <div className="controls">
           <button onClick={handleReset} disabled={loading} className="btn btn-secondary">
             <RotateCcw size={16} /> Reset
-          </button>
-          <button onClick={handleBurst} disabled={loading} className="btn btn-warning" style={{ backgroundColor: '#f59e0b', color: 'white' }}>
-            <Zap size={16} /> Trigger Burst
           </button>
           <button onClick={handleOptimize} disabled={loading} className="btn btn-primary">
             <Play size={16} /> Optimize (AI)
@@ -103,7 +92,7 @@ function App() {
           <MetricsPanel history={metricsHistory} />
         </div>
       </main>
-    </div>
+    </div >
   );
 }
 

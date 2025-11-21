@@ -5,6 +5,7 @@ class TopologyState(BaseModel):
     nodes: List[Dict[str, Any]]
     links: List[Dict[str, Any]]
     containers: Dict[str, str]
+    step: int = 0
 
 class OptimizationResult(BaseModel):
     initial_cost: float

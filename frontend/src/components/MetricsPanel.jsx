@@ -13,22 +13,46 @@ const MetricsPanel = ({ history }) => {
 
     const initialCost = history[0].cost;
     const currentCost = history[history.length - 1].cost;
-    const reduction = ((initialCost - currentCost) / initialCost * 100).toFixed(1);
+    const rawChange = ((currentCost - initialCost) / initialCost * 100);
+    const isReduction = rawChange <= 0;
+    const formattedChange = Math.abs(rawChange).toFixed(1) + '%';
+
+    const formatNumber = (num) => {
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+        return num.toString();
+    };
 
     return (
         <div className="w-full bg-white p-6 rounded-lg shadow-md flex flex-col gap-6">
             {/* Summary Card */}
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <p className="text-sm text-blue-600 font-semibold uppercase">Current Network Cost</p>
-                    <p className="text-3xl font-bold text-blue-900">{Math.round(currentCost).toLocaleString()}</p>
-                    <p className="text-xs text-blue-400 mt-1">Traffic Volume × Hops</p>
+                    <p className="text-sm text-blue-600 font-semibold uppercase">Total Network Load</p>
+                    <p className="text-3xl font-bold text-blue-900">{formatNumber(currentCost)}</p>
+                    <p className="text-xs text-blue-400 mt-1">
+                        (Traffic Volume × Hops)<br />
+                        Lower is better.
+                    </p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                    <p className="text-sm text-green-600 font-semibold uppercase">Optimization Impact</p>
-                    <p className="text-3xl font-bold text-green-900">-{reduction}%</p>
-                    <p className="text-xs text-green-400 mt-1">Reduction from initial state</p>
-                </div>
+
+                {isReduction ? (
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                        <p className="text-sm text-green-600 font-semibold uppercase">Optimization Success</p>
+                        <p className="text-3xl font-bold text-green-900">-{formattedChange}</p>
+                        <p className="text-xs text-green-400 mt-1">
+                            Efficiency gained by moving containers closer.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                        <p className="text-sm text-red-600 font-semibold uppercase">Traffic Surge</p>
+                        <p className="text-3xl font-bold text-red-900">+{formattedChange}</p>
+                        <p className="text-xs text-red-400 mt-1">
+                            High traffic detected between distant servers.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Chart Section */}
