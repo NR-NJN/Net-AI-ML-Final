@@ -1,6 +1,7 @@
-# Data Center Container Placement Optimization 
+# Data Center Container Placement Ops
 
 A visual demonstration of an RL agent optimizing container placement in a data center network to minimize traffic costs and handle proactive bursts.
+**Right now it is not a fully working demo i still have to make commits but this is a decent start**
 
 ## Prerequisites
 
