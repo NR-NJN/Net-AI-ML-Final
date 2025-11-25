@@ -6,7 +6,7 @@ const MetricsPanel = ({ history }) => {
         return (
             <div className="w-full bg-white p-6 rounded-lg shadow-md text-center">
                 <p className="text-gray-500">No optimization data yet.</p>
-                <p className="text-sm text-gray-400 mt-2">Click "Optimize (AI)" to start reducing network traffic.</p>
+                <p className="text-sm text-gray-400 mt-2">Click Optimize AI to start reducing network traffic.</p>
             </div>
         );
     }

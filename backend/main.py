@@ -38,7 +38,8 @@ def reset_simulation():
 def optimize_network(steps: int = 10):
     initial_cost = env._calculate_network_cost()
     if not agent.model:
-        agent.train(total_timesteps=1000)
+        agent.train(total_timesteps=2000)
+        env.reset()
     
     obs = env._get_obs()
     for _ in range(steps):

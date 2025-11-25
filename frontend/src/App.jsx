@@ -62,7 +62,7 @@ function App() {
     <div className="app-container">
       <header className="header">
         <div className="flex items-center gap-4">
-          <h1><Activity className="inline-icon" /> Data Center Optimizer</h1>
+          <h1>Data Center Optimizer</h1>
           {networkData && (
             <span className="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-mono">
               Step: {networkData.step}
