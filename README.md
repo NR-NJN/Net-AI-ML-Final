@@ -1,6 +1,6 @@
 # Data Center Container Placement Optimization 
 
-A visual demonstration of an AI agent (Reinforcement Learning) optimizing container placement in a data center network to minimize traffic costs and handle proactive bursts.
+A visual demonstration of an RL agent optimizing container placement in a data center network to minimize traffic costs and handle proactive bursts.
 
 ## Prerequisites
 
