@@ -1,0 +1,41 @@
+# Project Status: Data Center Optimization Demo
+
+## Implemented Features
+
+### 1. Core Backend Logic
+- [x] **Network Topology**: Hierarchical tree structure (Core, Aggregation, Edge/Server) implemented in `backend/simulation/topology.py`.
+- [x] **Traffic Simulation**: 
+    - Random background traffic.
+    - **Temporal Traffic Patterns**: Time aware traffic generation with specific bursts at Step 20 and Step 60.
+    - Implemented in `backend/simulation/traffic.py`.
+- [x] **RL Environment**: 
+    - Custom Gymnasium environment `DataCenterEnv` in `backend/ml/environment.py`.
+    - **Oracle Observation**: Environment now provides "future traffic" (next step) to the agent, enabling proactive behavior.
+- [x] **RL Agent**: PPO agent being Stable Baselines3 trained to minimize network cost.
+
+### 2. Frontend Visualization
+- [x] **Network Graph**: 
+    - D3.js force-directed graph.
+    - Visualizes Core, Aggregation, and Server nodes.
+- [x] **Metrics Panel**: 
+    - Realtime cost tracking.
+    - Traffic Surge vs Optimization Success indicators.
+- [x] **Interaction**: 
+    - Optimize button triggers the RL loop.
+    - Reset button restarts the simulation.
+
+### 3. Proactive Prediction (Phase 1 & 2)
+- [x] **Phase 1 (Time Awareness)**: Backend generates deterministic traffic patterns based on `step`.
+- [x] **Phase 2 (Oracle Agent)**: 
+    - Agent receives `next_traffic` in observation.
+    - Goal: Agent learns to move containers before the burst occurs.
+
+## Pending 
+
+### 1. Phase 3: The Predictive Model
+- [ ] **Train Predictor**: Replace the perfect future knowledge with a trained ML model (LSTM/Transformer) that predicts future traffic based on history.
+- [ ] **Integration**: Feed the predicted traffic to the RL agent instead of the actual future traffic.
+
+### 2. Refinement
+- [ ] **Verification**: rigorous testing to confirm the agent consistently beats the reactive baseline.
+
