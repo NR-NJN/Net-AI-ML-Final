@@ -47,15 +47,15 @@ The frontend will start at `http://localhost:5173` (or similar).
 
 ## How to Use
 
-1.  **Open the App**: Go to the frontend URL in your browser.
-2.  **Visualize**: You will see a tree graph of the data center.
+1.  Go to the frontend URL 
+2.   You will see a tree graph of the data center.
     *   **Red/Orange Lines**: High traffic links.
     *   **Cyan Dots**: Servers hosting the Burst Pair 1 
     *   **Magenta Dots**: Servers hosting the Burst Pair 2 
-3.  **Optimize**: Click the **Optimize** button.
+3.  Click the **Optimize** button.
     *   The AI will start moving containers to reduce cost.
     *   Watch the **Step Counter**.
-    *   **Proactive Behavior**: Around Step 15-19, watch the Cyan dots move closer together *before* the traffic burst at Step 20.
-4.  **Reset**: Click **Reset** to start a new simulation.
+    *   **Proactive Behavior**: Around Step 15-19, watch the Cyan dots move closer together before the traffic burst at Step 20.
+4.  Click **Reset** to start a new simulation.
 
 
