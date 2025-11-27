@@ -38,4 +38,3 @@
 
 ### 2. Refinement
 - [ ] **Verification**: rigorous testing to confirm the agent consistently beats the reactive baseline.
-
