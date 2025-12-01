@@ -76,8 +76,9 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             })
             .attr("stroke-opacity", d => d.load > 1000 ? 1 : 0.6)
             .attr("stroke-width", d => {
-
-                return Math.min(Math.sqrt(d.load / 100) + 1, 5);
+                if (d.load > 1000) return 5;
+                if (d.load > 100) return 3;
+                return 1;
             });
 
 

@@ -28,13 +28,35 @@ class NetworkTopology:
                 self.servers.append(server_id)
 
     def place_containers(self, num_containers: int):
-        
         self.containers.clear()
+        
+         
+        def get_server_in_pod(pod_index):
+             
+             
+            srv_idx = random.randint(0, self.servers_per_pod - 1)
+            return f"Server_{pod_index}_{srv_idx}"
+
         for i in range(num_containers):
             container_id = f"Container_{i}"
+            
              
-             
-            server_id = random.choice(self.servers)
+            if i == 0:
+                 
+                server_id = get_server_in_pod(0)
+            elif i == 1:
+                 
+                server_id = get_server_in_pod(2)
+            elif i == 2:
+                 
+                server_id = get_server_in_pod(1)
+            elif i == 3:
+                 
+                server_id = get_server_in_pod(3)
+            else:
+                 
+                server_id = random.choice(self.servers)
+                
             self.containers[container_id] = server_id
 
     def move_container(self, container_id: str, new_server_id: str):

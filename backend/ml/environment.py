@@ -3,6 +3,7 @@ from gymnasium import spaces
 import numpy as np
 from simulation.topology import NetworkTopology
 from simulation.traffic import TrafficGenerator
+from ml.predictor import TrafficPredictor
 
 class DataCenterEnv(gym.Env):
     def __init__(self, num_pods=4, servers_per_pod=4, num_containers=20):
@@ -10,26 +11,24 @@ class DataCenterEnv(gym.Env):
         
         self.num_pods = num_pods
         self.servers_per_pod = servers_per_pod
-        self.num_containers = num_containers
-        
-        # Initialize Simulation Components
+        self.num_containers = num_containers     
         self.topology = NetworkTopology(num_pods, servers_per_pod)
         self.traffic_gen = TrafficGenerator(num_containers)
+        
+         
+        self.predictor = TrafficPredictor(num_containers)
+        self.predictor.train(self.traffic_gen)
         
         self.servers = self.topology.servers
         self.num_servers = len(self.servers)
         
-        # Action Space: [Container_ID, Server_ID]
+         
         self.action_space = spaces.MultiDiscrete([num_containers, self.num_servers])
-        
-        # Observation Space: 
-        # [0..N-1]: Server Index for each container
-        # [N..2N-1]: Predicted Incoming Traffic for next step (scaled / 1000)
         self.observation_space = spaces.Box(
             low=0, 
-            high=np.inf, # Traffic can be high
-            shape=(2 * num_containers,), 
-            dtype=np.float32 # Changed to float for traffic
+            high=np.inf, 
+            shape=(3 * num_containers,), 
+            dtype=np.float32
         )
         
         self.current_traffic = None
@@ -38,13 +37,16 @@ class DataCenterEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        
         self.current_step = 0
         self.topology.place_containers(self.num_containers)
+        self.predictor.reset()
         
-        # Initial traffic (Step 0)
+         
         self.traffic_gen.generate_temporal_traffic(self.current_step)
         self.current_traffic = self.traffic_gen.get_traffic()
+        
+         
+        self.predictor.predict(self.current_traffic)
         
         return self._get_obs(), {"step": self.current_step}
 
@@ -55,19 +57,17 @@ class DataCenterEnv(gym.Env):
 
     def step(self, action):
         self.current_step += 1
-        
-        # 1. Apply Action (Move Container)
         container_idx, server_idx = action
         container_id = f"Container_{container_idx}"
         new_server_id = self.servers[server_idx]
         self.topology.move_container(container_id, new_server_id)
-        
-        # 2. Update Environment (New Traffic for this step)
         self.traffic_gen.generate_temporal_traffic(self.current_step)
         self.current_traffic = self.traffic_gen.get_traffic()
+        pred_traffic, uncertainty = self.predictor.predict(self.current_traffic)
+        network_cost = self._calculate_network_cost()
+        risk_penalty = np.sum(uncertainty) * 0.1  
         
-        # 3. Calculate Reward
-        total_cost = self._calculate_network_cost()
+        total_cost = network_cost + risk_penalty
         reward = -total_cost
         
         terminated = False
@@ -76,7 +76,7 @@ class DataCenterEnv(gym.Env):
         return self._get_obs(), reward, terminated, truncated, {"cost": total_cost, "step": self.current_step}
 
     def _get_obs(self):
-        # Part 1: Container Placements
+         
         placements = np.zeros(self.num_containers, dtype=np.float32)
         for i in range(self.num_containers):
             c_id = f"Container_{i}"
@@ -84,26 +84,10 @@ class DataCenterEnv(gym.Env):
             s_idx = self.servers.index(s_id)
             placements[i] = s_idx
             
-        # Part 2: Predicted Future Traffic (Oracle)
-        # Peek at next step's traffic
-        next_traffic = self.traffic_gen.peek_traffic(self.current_step + 1)
+         
+        pred_traffic, uncertainty = self.predictor.predict(self.current_traffic)
         
-        incoming_traffic = np.zeros(self.num_containers, dtype=np.float32)
-        for src, destinations in next_traffic.items():
-            for dst, vol in destinations.items():
-                # Extract index from "Container_X"
-                try:
-                    dst_idx = int(dst.split("_")[1])
-                    if 0 <= dst_idx < self.num_containers:
-                        incoming_traffic[dst_idx] += vol
-                except:
-                    pass
-        
-        # Scale traffic to be somewhat comparable to server indices (0-16)
-        # 5000 traffic -> 5.0
-        scaled_traffic = incoming_traffic / 1000.0
-        
-        return np.concatenate([placements, scaled_traffic])
+        return np.concatenate([placements, pred_traffic, uncertainty])
 
     def _calculate_network_cost(self):
         total_cost = 0

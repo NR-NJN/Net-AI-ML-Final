@@ -74,7 +74,7 @@ function App() {
             <RotateCcw size={16} /> Reset
           </button>
           <button onClick={handleOptimize} disabled={loading} className="btn btn-primary">
-            <Play size={16} /> Optimize (AI)
+            <Play size={16} /> Optimize
           </button>
         </div>
       </header>
