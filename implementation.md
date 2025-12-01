@@ -30,11 +30,22 @@
     - Agent receives `next_traffic` in observation.
     - Goal: Agent learns to move containers before the burst occurs.
 
-## Pending 
+### 4. Phase 3: The Predictive Model
+- [x] **Traffic Predictor**: Implemented LSTM (Long Short-Term Memory) neural network in `backend/ml/predictor.py` using PyTorch.
+- [x] **Conformal Prediction**: 
+    - Model outputs **Prediction Intervals** (90% confidence) instead of single points.
+    - Quantifies **Uncertainty** based on calibration data.
+- [x] **Risk-Averse Agent**: 
+    - RL Environment observes both `predicted_traffic` and `uncertainty`.
+    - Reward function penalizes high uncertainty, encouraging conservative placement.
 
-### 1. Phase 3: The Predictive Model
-- [ ] **Train Predictor**: Replace the perfect future knowledge with a trained ML model (LSTM/Transformer) that predicts future traffic based on history.
-- [ ] **Integration**: Feed the predicted traffic to the RL agent instead of the actual future traffic.
+### 5. Phase 4: Advanced Traffic Simulation
+- [x] **Causal Service Chains**: 
+    - Implemented causal logic: Traffic A->B (Step 20) triggers B->C (Step 22).
+    - Forces agent to learn multi-step dependencies.
+- [x] **Stochastic Noise**:
+    - **Drift**: Background traffic slowly increases over time.
+    - **Micro-Bursts**: Random, short-lived spikes to test agent robustness.
+    - **Volatility**: Burst traffic has high variance (Mean ± StdDev), challenging the predictor.
 
-### 2. Refinement
-- [ ] **Verification**: rigorous testing to confirm the agent consistently beats the reactive baseline.
+
