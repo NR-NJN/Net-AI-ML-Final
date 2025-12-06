@@ -39,6 +39,7 @@ class DataCenterEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = 0
         self.topology.place_containers(self.num_containers)
+        self.traffic_gen.reset()
         self.predictor.reset()
         
          
@@ -53,6 +54,9 @@ class DataCenterEnv(gym.Env):
     def get_current_state(self):
         state = self.topology.get_state_with_traffic(self.current_traffic)
         state["step"] = self.current_step
+        state["active_chains"] = self.traffic_gen.get_active_chains()
+        # Pass the set of active servers for visualization
+        state["active_servers"] = list(set(self.topology.containers.values()))
         return state
 
     def step(self, action):
@@ -65,15 +69,35 @@ class DataCenterEnv(gym.Env):
         self.current_traffic = self.traffic_gen.get_traffic()
         pred_traffic, uncertainty = self.predictor.predict(self.current_traffic)
         network_cost = self._calculate_network_cost()
-        risk_penalty = np.sum(uncertainty) * 0.1  
+        risk_penalty = np.sum(uncertainty) * 0.1
         
-        total_cost = network_cost + risk_penalty
+        # Energy Cost Calculation
+        # Count unique servers hosting at least one container
+        active_servers = set(self.topology.containers.values())
+        num_active_servers = len(active_servers)
+        
+        # Energy Penalty: Let's say each active server costs 25000 units
+        # This creates a trade-off: 
+        # - Saving 1 active server (25000 cost) vs. 
+        # - Increasing network latency by spreading out
+        energy_cost = num_active_servers * 25000.0
+        
+        # Debug: Print breakdown
+        print(f"Step {self.current_step}: Network={network_cost:.1f}, Energy={energy_cost:.1f}, Active={num_active_servers}")
+        
+        total_cost = network_cost + risk_penalty + energy_cost
         reward = -total_cost
         
         terminated = False
         truncated = False
         
-        return self._get_obs(), reward, terminated, truncated, {"cost": total_cost, "step": self.current_step}
+        return self._get_obs(), reward, terminated, truncated, {
+            "cost": float(total_cost), 
+            "network_cost": float(network_cost),
+            "energy_cost": float(energy_cost),
+            "active_servers": int(num_active_servers),
+            "step": int(self.current_step)
+        }
 
     def _get_obs(self):
          

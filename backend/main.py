@@ -42,9 +42,10 @@ def optimize_network(steps: int = 10):
         env.reset()
     
     obs = env._get_obs()
+    last_info = {}
     for _ in range(steps):
         action = agent.predict(obs)
-        obs, _, _, _, _ = env.step(action)
+        obs, _, _, _, last_info = env.step(action)
         
     final_cost = env._calculate_network_cost()
     
@@ -52,7 +53,8 @@ def optimize_network(steps: int = 10):
         "initial_cost": initial_cost,
         "final_cost": final_cost,
         "steps_taken": steps,
-        "final_state": env.get_current_state()
+        "final_state": env.get_current_state(),
+        "metrics": last_info # Contains energy_cost, active_servers, etc.
     }
 
 @app.post("/api/burst")
