@@ -12,46 +12,32 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
 
         const { nodes, links, containers } = data;
 
-
-        const prevContainers = svgRef.current._prevContainers || {};
-        const moves = [];
-
-        Object.entries(containers).forEach(([cid, sid]) => {
-            const prevSid = prevContainers[cid];
-            if (prevSid && prevSid !== sid) {
-                moves.push({ cid, from: prevSid, to: sid });
+        // Helper function for dragging (Moved INSIDE useEffect to capture simulation)
+        const drag = (simulation) => {
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
             }
-        });
 
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
 
-        svgRef.current._prevContainers = containers;
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
 
+            return d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended);
+        };
 
-        if (moves.length > 0) {
-            const particleGroup = svg.append("g").attr("class", "particles");
-
-            moves.forEach(move => {
-                const sourceNode = nodes.find(n => n.id === move.from);
-                const targetNode = nodes.find(n => n.id === move.to);
-
-                if (sourceNode && targetNode) {
-                    const particle = particleGroup.append("circle")
-                        .attr("r", 4)
-                        .attr("fill", "#facc15")
-                        .attr("stroke", "#000")
-                        .attr("cx", sourceNode.x)
-                        .attr("cy", sourceNode.y);
-
-                    particle.transition()
-                        .duration(1000)
-                        .attr("cx", targetNode.x)
-                        .attr("cy", targetNode.y)
-                        .remove();
-                }
-            });
-        }
-
-
+        // --- 1. Simulation Setup ---
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(80))
             .force("charge", d3.forceManyBody().strength(-800))
@@ -63,13 +49,12 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
                 return height / 2;
             }).strength(1.5));
 
-
+        // --- 2. Draw Links ---
         const link = svg.append("g")
             .selectAll("line")
             .data(links)
             .join("line")
             .attr("stroke", d => {
-
                 if (d.load > 1000) return "#ef4444";
                 if (d.load > 100) return "#f59e0b";
                 return "#cbd5e1";
@@ -81,85 +66,51 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
                 return 1;
             });
 
-
+        // --- 3. Draw Nodes ---
         const node = svg.append("g")
             .selectAll("g")
             .data(nodes)
             .join("g")
-            .call(drag(simulation));
+            .call(drag(simulation)); // Drag is now defined
 
-
-        node.each(function (d) {
-            const el = d3.select(this);
-            let tooltipText = `${d.id} (${d.type})`;
-
-            if (d.type === 'core') {
-                el.append("circle").attr("r", 18).attr("fill", "#ef4444").attr("stroke", "#fff").attr("stroke-width", 2);
-            } else if (d.type === 'aggregation') {
-                el.append("rect").attr("width", 24).attr("height", 24).attr("x", -12).attr("y", -12).attr("fill", "#3b82f6").attr("rx", 4).attr("stroke", "#fff").attr("stroke-width", 2);
-            } else {
-
-                el.append("rect").attr("width", 36).attr("height", 20).attr("x", -18).attr("y", -10).attr("fill", "#22c55e").attr("rx", 4).attr("stroke", "#fff").attr("stroke-width", 2);
-
-
-                const myContainers = Object.entries(containers)
-                    .filter(([cid, sid]) => sid === d.id)
-                    .map(([cid]) => cid);
-
-                if (myContainers.length > 0) {
-                    tooltipText += `\nContainers: ${myContainers.join(', ')}`;
+        // Node Circles
+        node.append("circle")
+            .attr("r", d => d.type === 'core' ? 15 : d.type === 'aggregation' ? 10 : 8)
+            .attr("fill", d => {
+                if (d.type === 'server') {
+                    // Check if server is active (has containers)
+                    const isActive = Object.values(containers).includes(d.id);
+                    return isActive ? "#3b82f6" : "#e2e8f0";
                 }
+                return "#64748b";
+            })
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 2);
 
-
-
-                if (myContainers.includes("Container_0") || myContainers.includes("Container_1")) {
-                    el.append("circle")
-                        .attr("r", 6)
-                        .attr("cx", -18)
-                        .attr("cy", -10)
-                        .attr("fill", "#06b6d4")
-                        .attr("stroke", "#fff")
-                        .attr("stroke-width", 2);
-                }
-
-                if (myContainers.includes("Container_2") || myContainers.includes("Container_3")) {
-                    el.append("circle")
-                        .attr("r", 6)
-                        .attr("cx", 18)
-                        .attr("cy", -10)
-                        .attr("fill", "#d946ef")
-                        .attr("stroke", "#fff")
-                        .attr("stroke-width", 2);
-                }
-
-
-                const badge = el.append("g").attr("transform", "translate(0, 18)");
-                badge.append("text")
-                    .text(`${myContainers.length} Cs`)
-                    .attr("text-anchor", "middle")
-                    .style("font-size", "10px")
-                    .style("fill", "#475569")
-                    .style("font-weight", "500");
+        // Helper to shorten labels
+        const shortenLabel = (id) => {
+            if (id.startsWith("Server_")) {
+                const parts = id.split("_");
+                return `S${parts[1]}-${parts[2]}`; // Server_0_0 -> S0-0
             }
-
-
-            el.append("title").text(tooltipText);
-        });
-
-
-        node.each(function (d) {
-            if (d.type !== 'server') {
-                d3.select(this).append("text")
-                    .text(d.id)
-                    .attr("x", 15)
-                    .attr("y", 5)
-                    .style("font-size", "12px")
-                    .style("font-weight", "bold")
-                    .style("fill", "#334155")
-                    .style("pointer-events", "none");
+            if (id.startsWith("Agg_Switch_")) {
+                return `Agg${id.split("_")[2]}`; // Agg_Switch_0 -> Agg0
             }
-        });
+            if (id === "Core_Switch") return "Core";
+            return id;
+        };
 
+        // Node Labels
+        node.append("text")
+            .text(d => shortenLabel(d.id))
+            .attr("x", 12)
+            .attr("y", 4)
+            .style("font-size", "10px") // Slightly smaller font
+            .style("font-weight", "bold")
+            .style("fill", "#334155")
+            .style("pointer-events", "none");
+
+        // --- 4. Simulation Tick ---
         simulation.on("tick", () => {
             link
                 .attr("x1", d => d.source.x)
@@ -170,7 +121,42 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             node.attr("transform", d => `translate(${d.x},${d.y})`);
         });
 
+        // --- 5. Flying Particles (Animations) ---
+        const prevContainers = svgRef.current._prevContainers || {};
+        const moves = [];
+        Object.entries(containers).forEach(([cid, sid]) => {
+            const prevSid = prevContainers[cid];
+            if (prevSid && prevSid !== sid) {
+                moves.push({ cid, from: prevSid, to: sid });
+            }
+        });
+        svgRef.current._prevContainers = containers;
 
+        if (moves.length > 0) {
+            const particleGroup = svg.append("g").attr("class", "particles");
+            moves.forEach(move => {
+                const sourceNode = nodes.find(n => n.id === move.from);
+                const targetNode = nodes.find(n => n.id === move.to);
+
+                // Fallback if nodes are moved/simulation updated positions
+                if (sourceNode && targetNode) {
+                    const particle = particleGroup.append("circle")
+                        .attr("r", 4)
+                        .attr("fill", "#facc15")
+                        .attr("stroke", "#000")
+                        .attr("cx", sourceNode.x || 0)
+                        .attr("cy", sourceNode.y || 0);
+
+                    particle.transition()
+                        .duration(1000)
+                        .attr("cx", targetNode.x || 0)
+                        .attr("cy", targetNode.y || 0)
+                        .remove();
+                }
+            });
+        }
+
+        // --- 6. Legend ---
         const legend = svg.append("g")
             .attr("transform", "translate(20, 20)");
 
@@ -178,8 +164,8 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             { color: "#ef4444", label: "Heavy Traffic (> 1000)" },
             { color: "#f59e0b", label: "Medium Traffic" },
             { color: "#cbd5e1", label: "Low/Idle" },
-            { color: "#06b6d4", label: "Burst Pair 1 (C0/C1)" },
-            { color: "#d946ef", label: "Burst Pair 2 (C2/C3)" }
+            { color: "#3b82f6", label: "Active Server" },
+            { color: "#e2e8f0", label: "Sleeping Server (Energy Saving)" }
         ];
 
         legendItems.forEach((item, i) => {
@@ -200,41 +186,19 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
                 .style("fill", "#64748b");
         });
 
-
+        // Cleanup
         return () => {
             simulation.stop();
         };
     }, [data, width, height]);
 
-
-    const drag = (simulation) => {
-        function dragstarted(event) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-        }
-
-        function dragged(event) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-        }
-
-        function dragended(event) {
-            if (!event.active) simulation.alphaTarget(0);
-            event.subject.fx = null;
-            event.subject.fy = null;
-        }
-
-        return d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended);
-    }
-
     return (
-        <div style={{ border: '1px solid #ccc', borderRadius: '8px', overflow: 'hidden' }}>
-            <svg ref={svgRef} width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ background: '#f9f9f9' }}></svg>
-        </div>
+        <svg
+            ref={svgRef}
+            width={width}
+            height={height}
+            style={{ background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}
+        />
     );
 };
 

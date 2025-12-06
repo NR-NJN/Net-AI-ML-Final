@@ -53,6 +53,42 @@ const MetricsPanel = ({ history }) => {
                         </p>
                     </div>
                 )}
+
+                {/* Energy Score Card */}
+                <div className="p-4 border border-black col-span-2">
+                    <p className="text-sm font-bold uppercase border-b border-black mb-2 pb-1">Energy Efficiency</p>
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <p className="text-3xl font-bold">
+                                {history[history.length - 1].active_servers || 0} <span className="text-lg font-normal text-gray-500">/ 16</span>
+                            </p>
+                            <p className="text-xs mt-1">Active Servers</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xl font-bold text-blue-600">
+                                {history[history.length - 1].energy_cost ? formatNumber(history[history.length - 1].energy_cost) : 0}
+                            </p>
+                            <p className="text-xs mt-1">Energy Penalty</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Active Service Chains */}
+            <div className="retro-card p-4 border border-black">
+                <h3 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Active Service Chains</h3>
+                <div className="space-y-2">
+                    {history[history.length - 1].active_chains && history[history.length - 1].active_chains.length > 0 ? (
+                        history[history.length - 1].active_chains.map((chain, i) => (
+                            <div key={i} className="flex items-center text-xs font-mono text-green-600">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                                {chain} [RUNNING]
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-xs font-mono text-gray-400">No active chains.</div>
+                    )}
+                </div>
             </div>
 
             {/* Chart Section */}

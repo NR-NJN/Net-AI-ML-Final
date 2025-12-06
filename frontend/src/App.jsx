@@ -47,8 +47,13 @@ function App() {
 
       setMetricsHistory(prev => [
         ...prev,
-        { step: optimizationStep, cost: result.initial_cost },
-        { step: optimizationStep + result.steps_taken, cost: result.final_cost }
+        {
+          step: optimizationStep + result.steps_taken,
+          cost: result.final_cost,
+          energy_cost: result.metrics ? result.metrics.energy_cost : 0,
+          active_servers: result.metrics ? result.metrics.active_servers : 0,
+          active_chains: result.final_state.active_chains
+        }
       ]);
       setOptimizationStep(prev => prev + result.steps_taken);
 
