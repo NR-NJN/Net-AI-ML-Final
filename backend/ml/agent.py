@@ -21,6 +21,8 @@ class RLAgent:
 
     def predict(self, obs):
         if self.model:
-            action, _ = self.model.predict(obs, deterministic=True)
+             
+             
+            action, _ = self.model.predict(obs, deterministic=False)
             return action
         return self.env.action_space.sample() 

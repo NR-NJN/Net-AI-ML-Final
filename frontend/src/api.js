@@ -23,3 +23,8 @@ export const triggerBurst = async () => {
     const response = await axios.post(`${API_URL}/burst`);
     return response.data;
 };
+
+export const forceChain = async () => {
+    const response = await axios.post(`${API_URL}/force_chain`);
+    return response.data;
+};

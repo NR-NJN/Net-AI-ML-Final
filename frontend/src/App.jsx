@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import NetworkGraph from './components/NetworkGraph';
 import MetricsPanel from './components/MetricsPanel';
-import { getNetworkState, resetSimulation, optimizeNetwork, triggerBurst } from './api';
-import { Play, RotateCcw, Activity, Zap } from 'lucide-react';
+import { getNetworkState, resetSimulation, optimizeNetwork, triggerBurst, forceChain } from './api';
+import { Play, Pause, RotateCcw, Activity, Zap } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -10,12 +10,22 @@ function App() {
   const [metricsHistory, setMetricsHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [optimizationStep, setOptimizationStep] = useState(0);
-
-
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     fetchState();
   }, []);
+
+
+  useEffect(() => {
+    let timer;
+    if (isPlaying && !loading) {
+      timer = setTimeout(() => {
+        handleOptimize();
+      }, 800);
+    }
+    return () => clearTimeout(timer);
+  }, [isPlaying, loading]);
 
   const fetchState = async () => {
     try {
@@ -63,6 +73,17 @@ function App() {
     setLoading(false);
   };
 
+  const handleForceChain = async () => {
+    setLoading(true);
+    try {
+      const result = await forceChain();
+      setNetworkData(result.state);
+    } catch (error) {
+      console.error("Failed to force chain:", error);
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="app-container">
       <header className="header">
@@ -75,11 +96,25 @@ function App() {
           )}
         </div>
         <div className="controls">
-          <button onClick={handleReset} disabled={loading} className="btn btn-secondary">
+          <button onClick={handleReset} disabled={loading} className="btn btn-secondary" title="Reset Simulation">
             <RotateCcw size={16} /> Reset
           </button>
-          <button onClick={handleOptimize} disabled={loading} className="btn btn-primary">
-            <Play size={16} /> Optimize
+
+          <button
+            onClick={() => setIsPlaying(!isPlaying)}
+            className={`btn ${isPlaying ? 'btn-warning' : 'btn-primary'}`}
+            title={isPlaying ? "Pause Simulation" : "Auto-Run Simulation"}
+          >
+            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+            {isPlaying ? "Pause" : "Play"}
+          </button>
+
+          <button onClick={handleOptimize} disabled={loading || isPlaying} className="btn btn-primary" title="Step Forward">
+            Step +5
+          </button>
+
+          <button onClick={handleForceChain} disabled={loading} className="btn btn-danger" style={{ backgroundColor: '#ef4444', color: 'white' }} title="Force Traffic Spike">
+            <Zap size={16} /> Force Spike
           </button>
         </div>
       </header>

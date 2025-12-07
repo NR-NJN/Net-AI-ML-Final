@@ -55,8 +55,15 @@ class DataCenterEnv(gym.Env):
         state = self.topology.get_state_with_traffic(self.current_traffic)
         state["step"] = self.current_step
         state["active_chains"] = self.traffic_gen.get_active_chains()
-        # Pass the set of active servers for visualization
+         
         state["active_servers"] = list(set(self.topology.containers.values()))
+         
+        container_chains = {}
+        for chain in self.traffic_gen.chains:
+            for container_id in chain.nodes:
+                container_chains[container_id] = chain.name
+        
+        state["container_chains"] = container_chains
         return state
 
     def step(self, action):
@@ -71,22 +78,40 @@ class DataCenterEnv(gym.Env):
         network_cost = self._calculate_network_cost()
         risk_penalty = np.sum(uncertainty) * 0.1
         
-        # Energy Cost Calculation
-        # Count unique servers hosting at least one container
+         
         active_servers = set(self.topology.containers.values())
         num_active_servers = len(active_servers)
         
-        # Energy Penalty: Let's say each active server costs 25000 units
-        # This creates a trade-off: 
-        # - Saving 1 active server (25000 cost) vs. 
-        # - Increasing network latency by spreading out
-        energy_cost = num_active_servers * 25000.0
+         
+        energy_cost = 0.0
         
-        # Debug: Print breakdown
-        print(f"Step {self.current_step}: Network={network_cost:.1f}, Energy={energy_cost:.1f}, Active={num_active_servers}")
+         
+         
+         
+        scaled_network_cost = network_cost / 100000.0
         
+         
+         
+        locality_bonus = 0.0
+        for src, dests in self.current_traffic.items():
+            src_srv = self.topology.containers[src]
+            for dst, vol in dests.items():
+                if vol > 0 and dst in self.topology.containers:
+                    dst_srv = self.topology.containers[dst]
+                    dst_srv = self.topology.containers[dst]
+                    if src_srv == dst_srv:
+                         
+                         
+                        locality_bonus += 100.0
+
+         
+        print(f"Step {self.current_step}: NetCost={network_cost:.0f}, Scaled={scaled_network_cost:.2f}, Bonus={locality_bonus:.1f}")
+        
+         
+        reward = -scaled_network_cost + locality_bonus
+        
+         
         total_cost = network_cost + risk_penalty + energy_cost
-        reward = -total_cost
         
         terminated = False
         truncated = False
