@@ -1,6 +1,6 @@
 # AI Data Center Optimizer
 
-An AI-driven simulation of a data center that optimizes container placement in real-time to minimize network congestion and energy usage.
+An AI driven simulation of a data center that optimizes container placement in real-time to minimize network congestion and energy usage.
 
 ## Installation & Setup
 
