@@ -43,9 +43,9 @@ This project demonstrates an AI Agent that learns to optimize container placemen
 ## 2. Understanding the Visualization
 
 ### The Nodes (Infrastructure)
-*   **Violet Node (Top)**: The Core Switch. Congestion here is critical.
-*   **Orange Nodes (Middle)**: Aggregation Switches.
-*   **Grey Nodes (Bottom)**: Physical Servers 
+*   **Violet Node**: The Core Switch. Congestion here is critical.
+*   **Orange Nodes**: Aggregation Switches.
+*   **Grey Nodes**: Physical Servers 
 
 ### The Dots (Containers)
 *   The Legend in the top-left explains the colors:
