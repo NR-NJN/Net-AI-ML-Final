@@ -1,51 +1,101 @@
-# Project Status: Data Center Optimization Demo
+# AI Data Center Optimizer - Usage & Demo Guide
 
-## Implemented Features
+This guide details how to set up, run, and demonstrate the AI-driven Data Center Optimization project.
 
-### 1. Core Backend Logic
-- [x] **Network Topology**: Hierarchical tree structure (Core, Aggregation, Edge/Server) implemented in `backend/simulation/topology.py`.
-- [x] **Traffic Simulation**: 
-    - Random background traffic.
-    - **Temporal Traffic Patterns**: Time aware traffic generation with specific bursts at Step 20 and Step 60.
-    - Implemented in `backend/simulation/traffic.py`.
-- [x] **RL Environment**: 
-    - Custom Gymnasium environment `DataCenterEnv` in `backend/ml/environment.py`.
-    - **Oracle Observation**: Environment now provides "future traffic" (next step) to the agent, enabling proactive behavior.
-- [x] **RL Agent**: PPO agent being Stable Baselines3 trained to minimize network cost.
+## 1. System Setup
 
-### 2. Frontend Visualization
-- [x] **Network Graph**: 
-    - D3.js force-directed graph.
-    - Visualizes Core, Aggregation, and Server nodes.
-- [x] **Metrics Panel**: 
-    - Realtime cost tracking.
-    - Traffic Surge vs Optimization Success indicators.
-- [x] **Interaction**: 
-    - Optimize button triggers the RL loop.
-    - Reset button restarts the simulation.
+### Prerequisites
+- **Python 3.8+** (for the Backend AI/Simulation)
+- **Node.js 16+** (for the Frontend Visualization)
 
-### 3. Proactive Prediction (Phase 1 & 2)
-- [x] **Phase 1 (Time Awareness)**: Backend generates deterministic traffic patterns based on `step`.
-- [x] **Phase 2 (Oracle Agent)**: 
-    - Agent receives `next_traffic` in observation.
-    - Goal: Agent learns to move containers before the burst occurs.
+### Backend Setup (Simulation & AI)
+1.  Navigate to the `backend/` directory:
+    ```bash
+    cd backend
+    ```
+2.  (Optional) Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    .\venv\Scripts\activate   # Windows
+    # source venv/bin/activate # Mac/Linux
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  Start the Backend Server:
+    ```bash
+    python main.py
+    ```
+    *The server will start on `http://localhost:8000`.*
 
-### 4. Phase 3: The Predictive Model
-- [x] **Traffic Predictor**: Implemented LSTM (Long Short-Term Memory) neural network in `backend/ml/predictor.py` using PyTorch.
-- [x] **Conformal Prediction**: 
-    - Model outputs **Prediction Intervals** (90% confidence) instead of single points.
-    - Quantifies **Uncertainty** based on calibration data.
-- [x] **Risk-Averse Agent**: 
-    - RL Environment observes both `predicted_traffic` and `uncertainty`.
-    - Reward function penalizes high uncertainty, encouraging conservative placement.
+### Frontend Setup (Visualization)
+1.  Open a new terminal and navigate to the `frontend/` directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the Development Server:
+    ```bash
+    npm run dev
+    ```
+    *The UI will open at `http://localhost:5173` (or similar).*
 
-### 5. Phase 4: Advanced Traffic Simulation
-- [x] **Causal Service Chains**: 
-    - Implemented causal logic: Traffic A->B (Step 20) triggers B->C (Step 22).
-    - Forces agent to learn multi-step dependencies.
-- [x] **Stochastic Noise**:
-    - **Drift**: Background traffic slowly increases over time.
-    - **Micro-Bursts**: Random, short-lived spikes to test agent robustness.
-    - **Volatility**: Burst traffic has high variance (Mean ± StdDev), challenging the predictor.
+---
 
+## 2. Demo Walkthrough Narrative
 
+This project demonstrates an AI Agent that learns to optimize container placement in real-time. Follow these steps to tell the story.
+
+### Step 1: The "Morning" State (Low Traffic)
+*   **Action**: Click the white **Reset** button.
+*   **Observation**:
+    *   Traffic lines are faint/grey.
+    *   Metrics show Low Network Load and standard Energy Efficiency.
+    *   **Narrative**: *"This is the data center in the morning. Traffic is low, but servers are active."*
+
+### Step 2: The "Peak Hour" (Saturation)
+*   **Action**: Wait for roughly **60 steps** (seconds) or click **Step +5** repeatedly.
+*   **Observation**:
+    *   Background traffic intensifies (lines turn Yellow/Orange).
+    *   **Narrative**: *"As the user base wakes up, the background load increases. This is the 'Day/Night' cycle in action."*
+
+### Step 3: The "Login Spike" (AI Reaction)
+*   **Action**: Click the red **Force Spike** button.
+*   **Observation**:
+    *   **Initial Trigger**: A blue line flashes (User logs in).
+    *   **AI Move**: Watch the **Emerald Dot** (Database). The AI will likely move it closer to the **Blue Dot** (Auth) or **Cyan Dot** (Web).
+    *   **The Surge**: A massive red burst follows, but because the AI moved the container, the impact is minimized.
+    *   **Narrative**: *"The AI saw the login event. It recalled that 'Login' is usually followed by a 'DB Fetch'. It proactively moved the database to the same switch steps before the heavy traffic hit."*
+
+### Step 4: Long-Term Optimization
+*   **Action**: Click the white **Play** button.
+*   **Observation**:
+    *   The AI will continuously tweak positions.
+    *   Watch the **Total Network Load** number drop over time.
+    *   Watch the **Active Servers** count. In low traffic, it might consolidate containers to allow servers to sleep.
+    *   **Narrative**: *"The AI isn't just fighting fires; it's constantly rebalancing to find the most efficient state for both speed and energy."*
+
+---
+
+## 3. Understanding the Visualization
+
+### The Nodes (Infrastructure)
+*   **Violet Node (Top)**: The Core Switch. Congestion here is critical.
+*   **Orange Nodes (Middle)**: Aggregation Switches.
+*   **Grey Nodes (Bottom)**: Physical Servers (S0-S15).
+
+### The Dots (Containers)
+*   The Legend in the top-left explains the colors:
+    *   **Cyan**: Web Store
+    *   **Blue**: Auth Service
+    *   **Emerald**: SQL Database
+    *   **Fuchsia**: Analytics Engine
+    *   **Yellow**: Background workloads
+
+### The Metrics
+1.  **Total Network Load**: A composite score of Volume × Distance. Lower is better.
+2.  **Energy Efficiency**: Shows how many physical servers are kept active (e.g., `12/16`). Lower is better for power bills.

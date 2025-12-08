@@ -76,7 +76,11 @@ class TrafficGenerator:
 
     def generate_temporal_traffic(self, step: int):
         self.traffic_matrix = {}
-        current_base = self.base_load + (step * self.drift_rate)
+        
+        # Cycle length: Slower cycle for longer demonstration windows
+        # Using /60.0 slows it down (Period ~370 steps)
+        cycle_pos = (np.sin(step / 60.0) + 1.0) / 2.0  # 0.0 to 1.0
+        current_base = self.base_load + (cycle_pos * 40.0) # Base 10 + (0 to 40) = Range 10-50
         
          
         for i in range(self.num_containers):
