@@ -40,7 +40,7 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .force("center", d3.forceCenter(width / 2, height / 2))
             // Force strict hierarchy: Core(Top) -> Agg(Mid) -> Server(Bot)
             .force("y", d3.forceY().y(d => {
-                if (d.type === 'core') return height * 0.15;
+                if (d.type === 'core') return height * 0.20; // Moved down from 0.15 to avoid clipping
                 if (d.type === 'aggregation') return height * 0.45;
                 if (d.type === 'server') return height * 0.8;
                 return height / 2;
@@ -70,17 +70,28 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .join("g");
 
         serverNode.append("circle")
-            .attr("r", d => d.type === 'server' ? 20 : 10) // Bigger servers (20px radius)
-            .attr("fill", "#e2e8f0")
+            .attr("r", d => d.type === 'server' ? 20 : (d.type === 'core' ? 25 : 15))
+            .attr("fill", d => {
+                if (d.type === 'core') return "#8b5cf6"; // Violet for Core
+                if (d.type === 'aggregation') return "#f97316"; // Orange for Agg
+                return "#e2e8f0"; // Slate for Server
+            })
             .attr("stroke", "#64748b")
             .attr("stroke-width", 2);
 
-        // Labels for Servers
+        // Labels for Servers & Switches (MOVED OUTSIDE)
         serverNode.append("text")
-            .text(d => d.type === 'server' ? `S${d.id.split('_')[2]}` : '')
-            .attr("dy", 4)
+            .text(d => {
+                if (d.type === 'server') return `S${d.id.split('_')[2]}`;
+                if (d.type === 'core') return 'CORE';
+                if (d.type === 'aggregation') return `Agg ${d.id.split('_')[2]}`;
+                return '';
+            })
+            .attr("dy", d => d.type === 'server' ? 32 : (d.type === 'core' ? 38 : 28)) // Move text below the circle
             .attr("text-anchor", "middle")
-            .style("font-size", "10px") // Slightly bigger text
+            .style("font-size", "11px")
+            .style("font-weight", "bold")
+            .style("fill", "#1e293b") // Dark slate text color for all
             .style("pointer-events", "none");
 
         // --- 4. Container Logic ---
@@ -95,20 +106,43 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             return CHAIN_COLORS["Other"];
         };
 
+        const getContainerName = (cId) => {
+            if (cId === "Container_0") return "Web/Store";
+            if (cId === "Container_1") return "Auth Service";
+            if (cId === "Container_2") return "Database";
+            if (cId === "Container_3") return "Analytics";
+            return cId;
+        };
+
         const containerData = Object.entries(containers).map(([cId, sId]) => ({
             id: cId,
             host: sId,
-            color: getChainColor(cId)
+            color: getChainColor(cId),
+            name: getContainerName(cId)
         }));
 
-        const containerCircles = containerLayer.selectAll("circle")
-            .data(containerData, d => d.id) // Keyed join
-            .join("circle")
+        const containerCircles = containerLayer.selectAll("g") // Change to Group to hold circle + title
+            .data(containerData, d => d.id)
+            .join("g");
+
+        containerCircles.append("circle")
             .attr("r", 5)
             .attr("fill", d => d.color)
             .attr("stroke", "#fff")
             .attr("stroke-width", 1)
-            .attr("opacity", d => d.color === CHAIN_COLORS["Other"] ? 0 : 1);
+            .attr("opacity", d => {
+                // HACK: Show specific "Other" containers to create density without clutter
+                if (d.color === CHAIN_COLORS["Other"]) {
+                    const idNum = parseInt(d.id.split('_')[1]);
+                    // Show valid static workloads (e.g. Containers 4-8)
+                    return (idNum >= 4 && idNum <= 8) ? 0.7 : 0;
+                }
+                return 1;
+            });
+
+        // Add simple tooltip
+        containerCircles.append("title")
+            .text(d => `${d.name} (${d.id})`);
 
         // Warm up simulation to ensure nodes have positions
         simulation.tick(1);
@@ -133,13 +167,11 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
 
             // Update Container Positions (Magnetize to Host)
             containerCircles
-                .attr("cx", d => {
+                .attr("transform", d => {
                     const hostNode = physicalNodes.find(n => n.id === d.host);
-                    return hostNode ? hostNode.x + (Math.random() * 24 - 12) : 0;
-                })
-                .attr("cy", d => {
-                    const hostNode = physicalNodes.find(n => n.id === d.host);
-                    return hostNode ? hostNode.y + (Math.random() * 24 - 12) : 0;
+                    const x = hostNode ? hostNode.x + (Math.random() * 24 - 12) : 0;
+                    const y = hostNode ? hostNode.y + (Math.random() * 24 - 12) : 0;
+                    return `translate(${x},${y})`;
                 });
 
             // SAVE POSITIONS for next render
@@ -148,31 +180,7 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             prevNodesRef.current = currentLocs;
         });
 
-
-        // --- 6. Flying Particle Animation (Migrations) ---
-        containerData.forEach(c => {
-            const prevHost = prevLocationsRef.current[c.id];
-            if (prevHost && prevHost !== c.host) {
-                // It moved! Animate a particle.
-                const sourceNode = physicalNodes.find(n => n.id === prevHost);
-                const targetNode = physicalNodes.find(n => n.id === c.host);
-
-                if (sourceNode && targetNode) {
-                    const particle = particleLayer.append("circle")
-                        .attr("r", 6)
-                        .attr("fill", "yellow")
-                        .attr("stroke", "black")
-                        .attr("cx", sourceNode.x || width / 2) // Fallback to center if undefined
-                        .attr("cy", sourceNode.y || height / 2);
-
-                    particle.transition()
-                        .duration(1000) // 1 second flight
-                        .attr("cx", targetNode.x || width / 2)
-                        .attr("cy", targetNode.y || height / 2)
-                        .on("end", () => particle.remove()); // Poof!
-                }
-            }
-        });
+        // REMOVED Flying Particle Animation per user request
 
         // Update refs for next turn
         const newLocs = {};

@@ -97,24 +97,23 @@ function App() {
         </div>
         <div className="controls">
           <button onClick={handleReset} disabled={loading} className="btn btn-secondary" title="Reset Simulation">
-            <RotateCcw size={16} /> Reset
+            Reset
           </button>
 
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className={`btn ${isPlaying ? 'btn-warning' : 'btn-primary'}`}
+            className="btn btn-secondary"
             title={isPlaying ? "Pause Simulation" : "Auto-Run Simulation"}
           >
-            {isPlaying ? <Pause size={16} /> : <Play size={16} />}
             {isPlaying ? "Pause" : "Play"}
           </button>
 
-          <button onClick={handleOptimize} disabled={loading || isPlaying} className="btn btn-primary" title="Step Forward">
+          <button onClick={handleOptimize} disabled={loading || isPlaying} className="btn btn-secondary" title="Step Forward">
             Step +5
           </button>
 
           <button onClick={handleForceChain} disabled={loading} className="btn btn-danger" style={{ backgroundColor: '#ef4444', color: 'white' }} title="Force Traffic Spike">
-            <Zap size={16} /> Force Spike
+            Force Spike
           </button>
         </div>
       </header>
