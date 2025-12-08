@@ -10,7 +10,7 @@ def get_json(url):
 
 def post_json(url, params=None):
     if params:
-        # Append params to URL for this simple case (it was query string in main.py for 'steps')
+         
         url += "?" + urllib.parse.urlencode(params)
     
     req = urllib.request.Request(url, method="POST")
@@ -21,15 +21,15 @@ def test_optimize():
     print("Fetching initial state...")
     try:
         initial_state = get_json(f"{BASE_URL}/state")
-        # print("Initial Containers:", json.dumps(initial_state['containers'], indent=2))
+         
         
         print("\nTriggering Optimize (5 steps)...")
         result = post_json(f"{BASE_URL}/optimize", params={"steps": 5})
         final_state = result['final_state']
         
-        # print("Final Containers:", json.dumps(final_state['containers'], indent=2))
+         
         
-        # Compare
+         
         moves = 0
         for cid, sid in initial_state['containers'].items():
             if final_state['containers'][cid] != sid:
@@ -43,7 +43,7 @@ def test_optimize():
         else:
             print("SUCCESS: Containers moved.")
 
-        # Check Active Servers for verification
+         
         initial_active = set(initial_state['containers'].values())
         final_active = set(final_state['containers'].values())
         print(f"Active Servers: Initial={len(initial_active)}, Final={len(final_active)}")

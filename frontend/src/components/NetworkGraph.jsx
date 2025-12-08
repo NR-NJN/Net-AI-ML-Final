@@ -96,19 +96,23 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
 
         // --- 4. Container Logic ---
 
-        // Helper to get chain color
-        const getChainColor = (cId) => {
-            if (container_chains && container_chains[cId]) {
-                return CHAIN_COLORS[container_chains[cId]] || CHAIN_COLORS["Other"];
-            }
-            if (cId === "Container_0" || cId === "Container_1" || cId === "Container_2") return CHAIN_COLORS["Login Flow"];
-            if (cId === "Container_3") return CHAIN_COLORS["Data Pipeline"];
-            return CHAIN_COLORS["Other"];
+        // --- 4. Container Logic ---
+
+        // Specific colors for the demo scenario
+        const getContainerColor = (cId, chainName) => {
+            // Distinct colors for the main actors
+            if (cId === "Container_0") return "#06b6d4"; // Cyan (Web)
+            if (cId === "Container_1") return "#3b82f6"; // Blue (Auth)
+            if (cId === "Container_2") return "#10b981"; // Emerald (DB)
+            if (cId === "Container_3") return "#d946ef"; // Fuchsia (Analytics)
+
+            // Fallback for others
+            return "#eab308"; // Yellow (Other)
         };
 
         const getContainerName = (cId) => {
-            if (cId === "Container_0") return "Web/Store";
-            if (cId === "Container_1") return "Auth Service";
+            if (cId === "Container_0") return "Web Store";
+            if (cId === "Container_1") return "Auth";
             if (cId === "Container_2") return "Database";
             if (cId === "Container_3") return "Analytics";
             return cId;
@@ -117,7 +121,7 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         const containerData = Object.entries(containers).map(([cId, sId]) => ({
             id: cId,
             host: sId,
-            color: getChainColor(cId),
+            color: getContainerColor(cId, container_chains[cId]),
             name: getContainerName(cId)
         }));
 
@@ -126,13 +130,13 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
             .join("g");
 
         containerCircles.append("circle")
-            .attr("r", 5)
+            .attr("r", 6) // Slightly larger for visibility
             .attr("fill", d => d.color)
             .attr("stroke", "#fff")
-            .attr("stroke-width", 1)
+            .attr("stroke-width", 1.5)
             .attr("opacity", d => {
                 // HACK: Show specific "Other" containers to create density without clutter
-                if (d.color === CHAIN_COLORS["Other"]) {
+                if (d.color === "#eab308") {
                     const idNum = parseInt(d.id.split('_')[1]);
                     // Show valid static workloads (e.g. Containers 4-8)
                     return (idNum >= 4 && idNum <= 8) ? 0.7 : 0;
@@ -143,6 +147,45 @@ const NetworkGraph = ({ data, width = 800, height = 600 }) => {
         // Add simple tooltip
         containerCircles.append("title")
             .text(d => `${d.name} (${d.id})`);
+
+        // --- LEGEND ---
+        const legendData = [
+            { label: "Auth Service", color: "#3b82f6" },
+            { label: "Web Store", color: "#06b6d4" },
+            { label: "Database", color: "#10b981" },
+            { label: "Analytics", color: "#d946ef" },
+            { label: "Background", color: "#eab308" }
+        ];
+
+        const legend = svg.append("g")
+            .attr("class", "legend")
+            .attr("transform", "translate(20, 20)"); // Top-left corner
+
+        // Legend Background
+        legend.append("rect")
+            .attr("width", 140)
+            .attr("height", legendData.length * 20 + 10)
+            .attr("fill", "white")
+            .attr("stroke", "#cbd5e1")
+            .attr("rx", 5);
+
+        // Legend Items
+        legendData.forEach((item, i) => {
+            const g = legend.append("g")
+                .attr("transform", `translate(10, ${i * 20 + 15})`);
+
+            g.append("circle")
+                .attr("r", 5)
+                .attr("fill", item.color);
+
+            g.append("text")
+                .attr("x", 15)
+                .attr("y", 4)
+                .text(item.label)
+                .style("font-size", "11px")
+                .style("font-family", "monospace")
+                .style("fill", "#475569");
+        });
 
         // Warm up simulation to ensure nodes have positions
         simulation.tick(1);
