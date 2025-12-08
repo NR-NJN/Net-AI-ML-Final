@@ -1,52 +1,12 @@
 # AI Data Center Optimizer - Usage & Demo Guide
 
-This guide details how to set up, run, and demonstrate the AI-driven Data Center Optimization project.
+This guide details how to demonstrate the AI driven Data Center Optimization project.
 
-## 1. System Setup
 
-### Prerequisites
-- **Python 3.8+** (for the Backend AI/Simulation)
-- **Node.js 16+** (for the Frontend Visualization)
-
-### Backend Setup (Simulation & AI)
-1.  Navigate to the `backend/` directory:
-    ```bash
-    cd backend
-    ```
-2.  (Optional) Create and activate a virtual environment:
-    ```bash
-    python -m venv venv
-    .\venv\Scripts\activate   # Windows
-    # source venv/bin/activate # Mac/Linux
-    ```
-3.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  Start the Backend Server:
-    ```bash
-    python main.py
-    ```
-    *The server will start on `http://localhost:8000`.*
-
-### Frontend Setup (Visualization)
-1.  Open a new terminal and navigate to the `frontend/` directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Start the Development Server:
-    ```bash
-    npm run dev
-    ```
-    *The UI will open at `http://localhost:5173` (or similar).*
 
 ---
 
-## 2. Demo Walkthrough Narrative
+## 1. Demo Walkthrough Narrative
 
 This project demonstrates an AI Agent that learns to optimize container placement in real-time. Follow these steps to tell the story.
 
@@ -81,7 +41,7 @@ This project demonstrates an AI Agent that learns to optimize container placemen
 
 ---
 
-## 3. Understanding the Visualization
+## 2. Understanding the Visualization
 
 ### The Nodes (Infrastructure)
 *   **Violet Node (Top)**: The Core Switch. Congestion here is critical.
