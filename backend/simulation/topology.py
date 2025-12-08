@@ -110,10 +110,7 @@ class NetworkTopology:
                             link_loads[(u, v)] += volume
                         elif (v, u) in link_loads:
                             link_loads[(v, u)] += volume
-
-         
-         
-         
+  
         
         links_data = []
         for u, v in self.graph.edges:

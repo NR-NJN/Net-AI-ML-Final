@@ -63,9 +63,7 @@ class TrafficGenerator:
              
              
             ServiceChain("Login Flow", ["Container_0", "Container_1", "Container_2"], [2, 2], [5000.0, 4000.0]),
-            
-             
-             
+    
             ServiceChain("Data Pipeline", ["Container_2", "Container_3", "Container_0"], [2, 2], [5000.0, 4000.0])
         ]
 
@@ -76,11 +74,8 @@ class TrafficGenerator:
 
     def generate_temporal_traffic(self, step: int):
         self.traffic_matrix = {}
-        
-        # Cycle length: Slower cycle for longer demonstration windows
-        # Using /60.0 slows it down (Period ~370 steps)
-        cycle_pos = (np.sin(step / 60.0) + 1.0) / 2.0  # 0.0 to 1.0
-        current_base = self.base_load + (cycle_pos * 40.0) # Base 10 + (0 to 40) = Range 10-50
+        cycle_pos = (np.sin(step / 60.0) + 1.0) / 2.0  
+        current_base = self.base_load + (cycle_pos * 40.0) 
         
          
         for i in range(self.num_containers):
@@ -93,24 +88,18 @@ class TrafficGenerator:
                     vol = max(0, random.gauss(current_base, current_base * 0.2))
                     self.traffic_matrix[src_id][dst_id] = vol
 
-         
-         
-        # Reduced probability for automatic chain start (was 0.05)
-        # We want the demo to be mostly controlled by the "Force Chain" button
         if not self.chains[0].active and random.random() < 0.02:
             self.chains[0].start()
             
         if not self.chains[1].active and random.random() < 0.02:
             self.chains[1].start()
 
-        # ... (Burst logic same) ...
+        
         for chain in self.chains:
             burst = chain.tick()
             if burst:
                 src, dst, vol = burst
                 self._add_burst(self.traffic_matrix, src, dst, vol, volatility=0.2)
-
-        # Reduced random background noise (was 0.2)
         if random.random() < 0.05:
             src = f"Container_{random.randint(0, self.num_containers-1)}"
             dst = f"Container_{random.randint(0, self.num_containers-1)}"
@@ -129,10 +118,6 @@ class TrafficGenerator:
         return self.traffic_matrix
         
     def peek_traffic(self, step: int):
-        """
-        Generates traffic for the step and returns it.
-        WARNING: This advances the state of the generator (chains).
-        """
         self.generate_temporal_traffic(step)
         return self.traffic_matrix
 
